@@ -29,7 +29,7 @@ COMMANDS = {
     'bezierCurveTo': 26, 'fillText': 27, 'strokeText': 28, 'setLineDash': 29, 'drawImage': 30,
     'putImageData': 31, 'clip': 32, 'save': 33, 'restore': 34, 'translate': 35,
     'rotate': 36, 'scale': 37, 'transform': 38, 'setTransform': 39, 'resetTransform': 40,
-    'set': 41, 'clear': 42, 'sleep': 43,
+    'set': 41, 'clear': 42, 'sleep': 43, 'recordGif': 44, 'saveGif': 45, 'addFrame': 46
 }
 
 
@@ -767,6 +767,17 @@ class Canvas(_CanvasBase):
         self._commands_cache = []
         self._buffers_cache = []
 
+    # GIF recording
+    def add_frame(self):
+        """Add a frame to the recorded GIF."""
+        self._send_canvas_command(COMMANDS['addFrame'])
+
+    def _start_recording_gif(self):
+        self._send_canvas_command(COMMANDS['recordGif'])
+
+    def _save_gif(self):
+        self._send_canvas_command(COMMANDS['saveGif'])
+
     # Events
     def on_client_ready(self, callback, remove=False):
         """Register a callback that will be called when a new client is ready to receive draw commands.
@@ -988,3 +999,11 @@ def hold_canvas(canvas):
 
     if not orig_caching:
         canvas.caching = False
+
+
+@contextmanager
+def record_gif(canvas):
+    with hold_canvas(canvas):
+        canvas._start_recording_gif()
+        yield
+        canvas._save_gif()

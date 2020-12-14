@@ -1,6 +1,11 @@
 // Copyright (c) Martin Renou
 // Distributed under the terms of the Modified BSD License.
 
+// @ts-ignore: No type definition for this library, and the library entry point is not right
+import * as GIFLib from 'gif.js/dist/gif';
+// @ts-ignore
+const GIF = GIFLib.default
+
 import {
   DOMWidgetModel, DOMWidgetView, WidgetModel, ISerializers, Dict, unpack_models
 } from '@jupyter-widgets/base';
@@ -69,7 +74,7 @@ const COMMANDS = [
   'bezierCurveTo', 'fillText', 'strokeText', 'setLineDash', 'drawImage',
   'putImageData', 'clip', 'save', 'restore', 'translate',
   'rotate', 'scale', 'transform', 'setTransform', 'resetTransform',
-  'set', 'clear', 'sleep',
+  'set', 'clear', 'sleep', 'recordGif', 'saveGif', 'addFrame',
 ];
 
 
@@ -370,6 +375,15 @@ class CanvasModel extends DOMWidgetModel {
       case 'putImageData':
         this.putImageData(args, buffers);
         break;
+      case 'recordGif':
+          this.startRecordingGif();
+          break;
+      case 'addFrame':
+          this.addFrameToGif();
+          break;
+      case 'saveGif':
+          this.downloadGif();
+          break;
       case 'set':
         await this.setAttr(args[0], args[1]);
         break;
@@ -555,6 +569,32 @@ class CanvasModel extends DOMWidgetModel {
     (this.ctx as any)[CanvasModel.ATTRS[attr]] = value;
   }
 
+  private startRecordingGif() {
+    this.gif = new GIF({
+      workers: 2,
+      quality: 10
+    });
+  }
+
+  private addFrameToGif() {
+    console.log('add frame');
+    this.gif.addFrame(this.canvas);
+  }
+
+  private downloadGif() {
+    this.gif.on('finished', (blob: Blob) => {
+      console.log('finished');
+      window.open(URL.createObjectURL(blob));
+    });
+
+    this.gif.on('abort', () => {
+      console.log('abort');
+    });
+
+    console.log('render', this.gif);
+    this.gif.render();
+  }
+
   private clearCanvas() {
     this.forEachView((view: CanvasView) => {
       view.clear();
@@ -599,6 +639,8 @@ class CanvasModel extends DOMWidgetModel {
 
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
+
+  gif: any;
 
   views: Dict<Promise<CanvasView>>;
 }

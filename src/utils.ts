@@ -120,6 +120,21 @@ async function toBytes(canvas: HTMLCanvasElement) : Promise<Uint8ClampedArray> {
 }
 
 export
+function download(data: any, filename: string) {
+  const a = document.createElement('a');
+  a.download = filename;
+  a.href = data;
+
+  // Emulate click
+  const e = document.createEvent('MouseEvents');
+  e.initMouseEvent('click', true, true, window,
+                    0, 0, 0, 0, 0, false, false, false,
+                    false, 0, null);
+
+  a.dispatchEvent(e);
+}
+
+export
 async function fromBytes(array: Uint8ClampedArray) : Promise<HTMLImageElement> {
   const blob = new Blob([array]);
 
